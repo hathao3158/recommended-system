@@ -412,10 +412,14 @@ elif choice == 'Collaborative Recommendation Application':
     with col5:
         st.write('Điện Thoại - Máy Tính Bảng')
     st.subheader("-"*79)
-    st.subheader('Find out special recommendations for you today:')
+    st.subheader('## Find out special recommendations for you today:')
     max_id=max(customized['customer_id'])
     min_id=min(customized['customer_id'])
-    cus_id = st.number_input('Please insert your customer ID: (For example: 6625594)',max_value=max_id,min_value=min_id,step=1)
-    if st.button('Get my customized products'):
+    input_id = st_tags(label='Enter your Customer_id:',text='Press → then Enter',
+                        suggestions= [str(x) for x in review['customer_id'].to_list()],
+                        maxtags = 1,key='1')
+    if len(input_id)>0:
+        cus_id = float(input_id[0])
         customized_product(cus_id)
+        st.write('Note: Remember to clear current user_id before input a new one')
     st.subheader("-"*79)
