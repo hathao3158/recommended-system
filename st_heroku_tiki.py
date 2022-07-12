@@ -1,6 +1,7 @@
 #from distutils.sysconfig import customize_compiler
 #from tkinter import Variable
 import streamlit as st
+from streamlit_tags import st_tags
 from sklearn import metrics
 import numpy as np
 import pandas as pd
