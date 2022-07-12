@@ -1,16 +1,13 @@
-from distutils.sysconfig import customize_compiler
-from tkinter import Variable
+#from distutils.sysconfig import customize_compiler
+#from tkinter import Variable
 import streamlit as st
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
 from sklearn import metrics
 import numpy as np
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
-import pickle
-import re
+#import pickle
+#import re
 
 #********************************************************************************************************************************
 # SOURCE CODE
