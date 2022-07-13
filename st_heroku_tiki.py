@@ -15,6 +15,15 @@ import matplotlib.pyplot as plt
 #********************************************************************************************************************************
 
 content=pd.read_csv('content.csv')
+content.loc[:, "price_format"] = content["price"].map('{:,d}'.format)+'đ'
+content['price_format']=content['price_format'].apply(lambda x: x.replace(",","."))
+
+content.loc[:, "list_price_format"] = content["list_price"].map('{:,d}'.format)+'đ'
+content['list_price_format']=content['list_price_format'].apply(lambda x: x.replace(",","."))
+
+# new_title = '<p style="font-family:sans-serif; color:Green; font-size: 42px;">New image</p>'
+# st.markdown(new_title, unsafe_allow_html=True)
+
 content_short=pd.read_csv('content_short.csv')
 similar_product=pd.read_csv('similar_product.csv')
 similar_product.columns.values[0] = "Key"
@@ -59,6 +68,8 @@ def product_info_layout(product_id):
     image=product_df['image'].values[0]
     price=product_df['price'].values[0]
     list_price=product_df['list_price'].values[0]
+    f_price=product_df['price_format'].values[0]
+    f_list_price=product_df['list_price_format'].values[0]
     discount=str(round((-list_price+price)/list_price*100,0))+"%"
     
     col1, col2= st.columns([4,3])
@@ -67,8 +78,8 @@ def product_info_layout(product_id):
     with col2:
         st.subheader(name)
         st.write(f'{brand}\t|\t{key_group}\t|\t{sub_group_1}')
-        st.metric(label="Original Price", value=list_price)
-        st.metric(label="Discounted Price", value=price,delta=discount)
+        st.metric(label="Original Price", value=f_list_price)
+        st.metric(label="Discounted Price", value=f_price,delta=discount)
 def extend_info(value):
     TTCT_idx=value.index("THÔNG TIN CHI TIẾT")
     MTSP_idx=value.index("MÔ TẢ SẢN PHẨM")
@@ -86,7 +97,7 @@ def extend_description(value):
             st.write(f"- {text}")
 
 def product_description(product_id):
-    st.subheader("Product Information")
+    #st.markdown('<p style="color:#0ea6e8; font-size: 32px;">Product Information</p>',unsafe_allow_html=True)
     product_df=content[content['item_id']==product_id]
     link="https://tiki.vn/"+product_df['url'].values[0][8:]
     description=product_df['light_description'].values[0]
@@ -99,7 +110,7 @@ def product_description(product_id):
     st.write(f'Reference Link: {link}')
 
 def product_review_1(product_id):
-    st.subheader("Product Review")
+    #st.markdown('<p style="color:#0ea6e8; font-size: 32px;">Product Review</p>',unsafe_allow_html=True)
     col1, col2= st.columns([4,5])
     with col1:
         total_rating=str(int(content[content['item_id']==product_id]['total_rating']))
@@ -125,7 +136,7 @@ def product_review_1(product_id):
         st.pyplot(fig)
 
 def product_review_2(product_id):
-    my_expander=st.expander("Detail Product Review from Tiki customers")
+    my_expander=st.expander("Read all reviews from Tiki customers")
     with my_expander:
         if product_id in review['product_id'].unique().tolist():
             #st.write("##### Reviews with detail content:")
@@ -146,7 +157,11 @@ def similar_product_rec_1(i):
 def similar_product_rec_2(i):
     similar_list=similar_product[similar_product['Key']==item_id]['similar_products'].values[0]
     product_df=content[content['item_id']==similar_list[i]]
-    st.metric(label="Discounted Price",value=product_df['price'].values[0])
+    price=product_df['price_format'].values[0]
+    st.write(f'''
+    *Discount Price*:\n
+    #### {price}
+    ''')
     my_expander=st.expander("Product details")
     with my_expander:
         product_description(similar_list[i])
@@ -175,15 +190,18 @@ def similar_product_rec(product_id):
     with col5:
         similar_product_rec_2(4)
 
+
 #------------------------------------------------------------------------------------------------------------------------------
 # PART 5 - COLLABORATIVE RECOMMENDATION APPLICATION
 def top_customize_product(cus_id):
     product_id_list=customized[customized['customer_id']==cus_id]['customized_products'].values[0]
-    for i in range(0, len(product_id_list)):
-        product_id_list[i] = int(product_id_list[i])
+    product_id_list=[int(x) for x in product_id_list]
+    #for i in range(0, len(product_id_list)):
+        #product_id_list[i] = int(product_id_list[i])
     for pro in product_id_list:
+        st.write()
         product_info_layout(pro)
-        my_expander=st.expander("Product details")
+        my_expander=st.expander("Show details...")
         with my_expander:
             product_description(pro)
             product_review_1(pro)
@@ -194,14 +212,14 @@ def customized_product(cus_id):
         cus_name=review[review['customer_id']==cus_id]['name'].values[0]
         st.write(f'##### Hi {cus_name},')
         st.write('##### Tiki would like to recommend you:\n')
-        st.write(top_customize_product(cus_id))
+        top_customize_product(cus_id)
     else:
         st.write(f'##### Hi beloved user,')
         st.write('##### Tiki cannot find your ID  on Tiki Platform.')
         st.write('##### Please find our top products with highest numbers of recommendations in below:\n')
         for pro in [299461,1600005,47321729,405243,8141868]:
             product_info_layout(pro)
-            my_expander=st.expander("Product details")
+            my_expander=st.expander("Show details...")
             with my_expander:
                 product_description(pro)
                 product_review_1(pro)
@@ -222,10 +240,12 @@ choice = st.sidebar.selectbox('Menu',menu)
 # PART 1 - BUSINESS OBJECTIVE
 if choice == 'Bussiness Objective':
     
-    st.subheader('Bussiness Objective/Problem')
+    st.markdown('<p style="color:#0ea6e8; font-size: 32px;">Business Objective</p>',unsafe_allow_html=True)
+    st.write("")
+    st.write("")
     st.image('logo-tiki.png')
     st.write('''
-    ##### Tiki is an "all in one" commercial ecosystem, in there is tiki.vn, which is a standing e-commerce website Top 2 in Vietnam, top 6 in Southeast Asia.
+    Tiki is an "all in one" commercial ecosystem, in there is tiki.vn, which is a standing e-commerce website Top 2 in Vietnam, top 6 in Southeast Asia.
 
 On tiki.vn website, many advanced support utilities have been deployed high user experience and they want to build many more conveniences.
 
@@ -233,9 +253,9 @@ Assuming Tiki has not implemented Recommender System and you are required to imp
     ''')
     
     st.subheader(' ')
-    st.subheader('Solution Recommendation')
+    st.markdown('<p style="color:#0ea6e8; font-size: 32px;">Solution Recommendation</p>',unsafe_allow_html=True)
     st.write('''
-    ##### Based on the above requirements, we need to build Recommendation System on tiki.vn to give product suggestions to users/customers.
+    Based on the above requirements, we need to build Recommendation System on tiki.vn to give product suggestions to users/customers.
 
 There are 2 types of model we can use for tiki.vn:
 - Content based filtering
@@ -253,9 +273,7 @@ elif choice == 'Content Recommend System':
     - If customers choose a specific product, Content Recommend System will suggest 5 similar products.
 
     ''')
-    st.write('''
-    ### 1. Data Understanding:
-    ''')
+    st.markdown('<p style="color:#0ea6e8; font-size: 32px;">1. Data Understanding</p>',unsafe_allow_html=True)
     st.write('##### Read Product Raw Data')
     st.dataframe(content_short[['item_id', 'name', 'description', 'rating', 'price', 'list_price',
        'brand', 'group', 'url', 'image']].head())
@@ -263,9 +281,7 @@ elif choice == 'Content Recommend System':
     st.write('1. Column "group" has long names but they can be classified into key group & sub groups.')
     st.write('2. To give recommendation base on content, we can merge column "name" & column "description" together under new column "content", which will support buildding our Content-based Recommend System.')
     
-    st.write('''
-    ### 2. Data Preparation:
-    ''')
+    st.markdown('<p style="color:#0ea6e8; font-size: 32px;">2. Data Preparation</p>',unsafe_allow_html=True)
     st.write('##### New Product DataFrame after cleaning:')
     st.dataframe(content_short[['item_id', 'name', 'url', 'image', 'description', 'rating', 'price','list_price', 'brand', 'group', 'key_group', 'sub_group_1','sub_group_2', 'sub_group_3', 'content']].head())
     key_group=content['key_group'].unique()
@@ -275,15 +291,14 @@ elif choice == 'Content Recommend System':
     product_by_group=content[['key_group','item_id']].groupby('key_group').count().sort_values('item_id',ascending=False).reset_index()
     #st.table(product_by_group)
     fig1 =  plt.figure(figsize=(10,4))
-    sns.barplot(data=product_by_group, y='item_id', x='key_group',color='mediumseagreen')
-    plt.xlabel("Key Group")
-    plt.ylabel("Numbers of products")
+    sns.barplot(data=product_by_group, y='item_id', x='key_group',color='dodgerblue')
+    plt.xlabel("")
+    plt.ylabel("")
     plt.xticks(rotation=80)
     plt.title('Numbers of products by key group')
     st.pyplot(fig1)
-    st.write('''
-    ### 3. Content-Based Recommend System Model:
-    ''')
+
+    st.markdown('<p style="color:#0ea6e8; font-size: 32px;">3. Model</p>',unsafe_allow_html=True)
     st.write("""
     We use 2 models for content-based recommend system: Gensim & Cosine Similarity.
     Both Gensim & Cosine Similarity show good results for content-based recommendation.
@@ -316,20 +331,24 @@ elif choice == 'Content Recommendation Application':
     selected_product = st.selectbox("Type or select a product from the dropdown",product_list)
     if st.button('🔍 Search'):
         item_id=content[content['name']==selected_product]['item_id'].values[0]
-        st.subheader("-"*79)
+        st.write("-"*100)
         ## Product Key Metrics
         product_info_layout(item_id)
         ## Product Description
-        product_description(item_id)
+        st.markdown("""<style>.streamlit-expanderHeader {color:#0ea6e8; font-size: 25px;}</style>""",unsafe_allow_html=True)
+        with st.expander("Product Information"):
+            product_description(item_id)
         ## Product Review
-        st.subheader("-"*79)
-        product_review_1(item_id)
+        with st.expander("Reviews"):
+            product_review_1(item_id)
         product_review_2(item_id)
         ## Product Recommendation
-        st.subheader("-"*79)
-        st.subheader("Top 5 Similar Products")
+        st.write("-"*100)
+        st.markdown('<p style="color:#0ea6e8; font-size: 32px;">Top 5 Similar Products</p>',unsafe_allow_html=True)
         similar_product_rec(item_id)
-        st.subheader("-"*79)
+        st.write("-"*100)
+    else:
+        st.image('banner-tiki.png')
 #------------------------------------------------------------------------------------------------------------------------------
 # PART 4 - COLLABORATIVE RECOMMEND SYSTEM
 elif choice == 'Collaborative Recommend System':
@@ -340,28 +359,25 @@ elif choice == 'Collaborative Recommend System':
     - For each customer, Collaborative Recommend System will suggest 5 customized products base on their historical rating of other products.
 
     ''')
-    st.write('''
-    ### 1. Data Understanding:
-    ''')
+    st.markdown('<p style="color:#0ea6e8; font-size: 32px;">1. Data Understanding</p>',unsafe_allow_html=True)
     st.write('##### Read Product Raw Data')
     st.dataframe(review.head())
     st.write(f'''
-    We only need 3 columns for Collaborative Recommend System "customer_id","product_id","rating".
+    We only need 3 columns for Collaborative Recommend System "customer_id", "product_id", "rating".
     Therefore, drop other columns''')
         
-    st.write('''
-    ### 2. Data Preparation:
-    ''')
+    st.markdown('<p style="color:#0ea6e8; font-size: 32px;">2. Data Preparation</p>',unsafe_allow_html=True)
     st.write('##### New Product DataFrame after cleaning:')
     st.dataframe(review[["customer_id","product_id","rating"]].head())
     
-    st.write('''
-    ### 3. Content-Based Recommend System Model:
-    ''')
+    st.markdown('<p style="color:#0ea6e8; font-size: 32px;">3. Model</p>',unsafe_allow_html=True)
     st.write("""
     We use 2 models for collaborative recommend system: ALS & SurPRISE.
-    Within SurPRISE, we test with many models such as SVD(), SVDpp(), NMF(), SlopeOne(), BaselineOnly(),KNNBasic(), KNNBaseline(), KNNWithMeans(), CoClustering(), KNNWithZScore(),CoClustering(), KNNWithZScore().
+    
+    Within SurPRISE, we test with many models such as SVD(), SVDpp(), NMF(), SlopeOne(), BaselineOnly(), KNNBasic(), KNNBaseline(), KNNWithMeans(), CoClustering(), KNNWithZScore(), CoClustering(), KNNWithZScore().
+    
     After try different models, we would like to use SurPRISE with BaselineOnly model for our collaborative recommend system.
+    
     ##### MODEL RESULT - Top 5 similar products for each specific product:
     Below is a result dataframe with:
     - customerID 
@@ -384,11 +400,11 @@ elif choice == 'Collaborative Recommend System':
 #------------------------------------------------------------------------------------------------------------------------------
 # PART 5 - COLLABORATIVE RECOMMENDATION APPLICATION
 elif choice == 'Collaborative Recommendation Application':
-    st.subheader("-"*79)
+    
     st.header("Product Recommendation with Collaborative Recommend System")
     st.image('tiki-banner3.png')
-    st.subheader("-"*79)
-    st.subheader('Best Selling Categories at Tiki')
+    #st.subheader("-"*79)
+    st.markdown('<p style="color:#0ea6e8; font-size: 32px;">Best Selling Categories at Tiki</p>',unsafe_allow_html=True)
     col1,col2,col3,col4,col5=st.columns([2,2,2,2,2])
     with col1:
         st.image('thiet_bi_phu_kien_so.jpg')
@@ -412,15 +428,18 @@ elif choice == 'Collaborative Recommendation Application':
         st.write('Laptop - Máy Vi Tính - Linh kiện')
     with col5:
         st.write('Điện Thoại - Máy Tính Bảng')
-    st.subheader("-"*79)
-    st.subheader('## Find out special recommendations for you today:')
+    #st.subheader("-"*79)
+    st.markdown('<p style="color:#0ea6e8; font-size: 32px;">Find out special recommendations for you today:</p>',unsafe_allow_html=True)
     max_id=max(customized['customer_id'])
     min_id=min(customized['customer_id'])
-    input_id = st_tags(label='Enter your Customer_id:',text='Press → then Enter',
+    #cus_id = st.number_input('Please insert your customer ID: (For example: 6625594)',max_value=max_id,min_value=min_id,step=1)
+    #if st.button('📌 Get my customized products'):
+        #customized_product(cus_id)
+    input_id = st_tags(label='Please insert your customer ID: (For example: 6625594)',text='Press → then Enter',
                         suggestions= [str(x) for x in review['customer_id'].to_list()],
                         maxtags = 1,key='1')
     if len(input_id)>0:
         cus_id = float(input_id[0])
         customized_product(cus_id)
         st.write('Note: Remember to clear current user_id before input a new one')
-    st.subheader("-"*79)
+    #st.subheader("-"*79)
