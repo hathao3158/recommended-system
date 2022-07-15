@@ -41,6 +41,7 @@ rating_df['rating']=rating_df['variable'].apply(lambda x: str(x)+"⭐")
 customized=pd.read_csv('customized_product.csv')
 customized['customized_products']=customized[["Product_1","Product_2","Product_3","Product_4","Product_5"]].values.tolist()
 customer_list=review['customer_id'].unique().tolist()
+key = 1
 
 #********************************************************************************************************************************
 # FUNCTION
@@ -149,47 +150,70 @@ def product_review_2(product_id):
             st.write('This product have no reviews.') 
 
 def similar_product_rec_1(i):
-    similar_list=similar_product[similar_product['Key']==item_id]['similar_products'].values[0]
-    product_df=content[content['item_id']==similar_list[i]]
-    st.image(product_df['image'].values[0])
-    st.write(product_df['name'].values[0])
-
-def similar_product_rec_2(i):
+    global key
+    key= key+1
     similar_list=similar_product[similar_product['Key']==item_id]['similar_products'].values[0]
     product_df=content[content['item_id']==similar_list[i]]
     price=product_df['price_format'].values[0]
-    st.write(f'''
-    *Discount Price*:\n
-    #### {price}
-    ''')
-    my_expander=st.expander("Product details")
-    with my_expander:
-        product_description(similar_list[i])
+    st.image(product_df['image'].values[0])
+    st.write(f'''### {price}''')
+    my_button = st.button(product_df['name'].values[0],key= key)
+    return my_button
+
+
     
 def similar_product_rec(product_id):
+    global key
+    choose=None
+    similar_list=similar_product[similar_product['Key']==product_id]['similar_products'].values[0]
     col1,col2,col3,col4,col5=st.columns([2,2,2,2,2])
     with col1:
-        similar_product_rec_1(0) 
+        key= key*1
+        butt1 = similar_product_rec_1(0)
+        if butt1:
+            choose=similar_list[0]
+            #st.experimental_memo.clear()
     with col2:
-        similar_product_rec_1(1)     
+        key= key*2
+        butt2 = similar_product_rec_1(1)
+        if butt2:
+            choose=similar_list[1]
+            #st.experimental_memo.clear()  
     with col3:
-        similar_product_rec_1(2)
+        key= key*3
+        butt3 = similar_product_rec_1(2)
+        if butt3:
+            choose=similar_list[2]
+            #st.experimental_memo.clear()
     with col4:
-        similar_product_rec_1(3)
+        key= key*4
+        butt4 = similar_product_rec_1(3)
+        if butt4:
+            choose=similar_list[3]
+            #st.experimental_memo.clear()
     with col5:
-        similar_product_rec_1(4)
-    col1,col2,col3,col4,col5=st.columns([2,2,2,2,2])
-    with col1:
-        similar_product_rec_2(0) 
-    with col2:
-        similar_product_rec_2(1)     
-    with col3:
-        similar_product_rec_2(2)
-    with col4:
-        similar_product_rec_2(3)
-    with col5:
-        similar_product_rec_2(4)
+        key= key*5
+        butt5 = similar_product_rec_1(4)
+        if butt5:
+            choose=similar_list[4]
+            #st.experimental_memo.clear()
+    return choose
 
+
+def show_a_product(item_id):
+    st.write("-"*100)
+    ## Product Key Metrics
+    product_info_layout(item_id)
+    ## Product Description
+    st.markdown("""<style>.streamlit-expanderHeader {color:#0ea6e8; font-size: 25px;}</style>""",unsafe_allow_html=True)
+    with st.expander("Product Information"):
+        product_description(item_id)
+    ## Product Review
+    with st.expander("Reviews"):
+        product_review_1(item_id)
+    product_review_2(item_id)
+    ## Product Recommendation
+    st.write("-"*100)
 
 #------------------------------------------------------------------------------------------------------------------------------
 # PART 5 - COLLABORATIVE RECOMMENDATION APPLICATION
@@ -326,29 +350,27 @@ elif choice == 'Content Recommend System':
 #------------------------------------------------------------------------------------------------------------------------------
 # PART 3 - CONTENT RECOMMENDATION APPLICATION
 elif choice == 'Content Recommendation Application':
+    key= key*6
     st.header("Product Recommendation with Content Recommend System")
     product_list = content['name'].values
     selected_product = st.selectbox("Type or select a product from the dropdown",product_list)
-    if st.button('🔍 Search'):
+    item_id = None
+    if st.checkbox('🔍 Search'):
         item_id=content[content['name']==selected_product]['item_id'].values[0]
-        st.write("-"*100)
-        ## Product Key Metrics
-        product_info_layout(item_id)
-        ## Product Description
-        st.markdown("""<style>.streamlit-expanderHeader {color:#0ea6e8; font-size: 25px;}</style>""",unsafe_allow_html=True)
-        with st.expander("Product Information"):
-            product_description(item_id)
-        ## Product Review
-        with st.expander("Reviews"):
-            product_review_1(item_id)
-        product_review_2(item_id)
-        ## Product Recommendation
-        st.write("-"*100)
-        st.markdown('<p style="color:#0ea6e8; font-size: 32px;">Top 5 Similar Products</p>',unsafe_allow_html=True)
-        similar_product_rec(item_id)
-        st.write("-"*100)
+        while item_id is not None:
+            show_a_product(item_id)
+            st.markdown('<p style="color:#0ea6e8; font-size: 32px;">Top 5 Similar Products</p>',unsafe_allow_html=True)
+            new_item = similar_product_rec(item_id)
+            st.write("-"*100)
+            item_id=None
+            while new_item is not None:
+                item_id = new_item
+                new_item = None
     else:
         st.image('banner-tiki.png')
+    
+            
+
 #------------------------------------------------------------------------------------------------------------------------------
 # PART 4 - COLLABORATIVE RECOMMEND SYSTEM
 elif choice == 'Collaborative Recommend System':
